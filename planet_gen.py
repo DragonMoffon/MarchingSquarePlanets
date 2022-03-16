@@ -152,7 +152,8 @@ class Planet:
         self.shown_chunks = []
 
     def find_revealed_chunks(self, matrix):
-        self.shown_chunks = [self.chunks[self.data.chunk_radius,self.data.chunk_radius]]
+        pass
+        # self.shown_chunks = []
         # for line in self.chunks:
         #     for chunk in line:
         #         done = False
@@ -169,7 +170,9 @@ class Planet:
         #                 chunk.hide()
 
     def draw(self):
-        for chunk in self.shown_chunks:
+        for line in self.chunks:
+            for chunk in line:
+                chunk.reveal()
                 chunk.render()
         # for chunk in self.shown_chunks:
         #    chunk.render()

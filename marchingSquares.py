@@ -32,11 +32,18 @@ def roof(x):
 
 
 def get_indices(values):
+    """
+    Returns the index list for the necessary marching Square combination.
+     Indices 0-3 are the major points 4-7 are the half points starting from the bottom left.
+    """
     check = tuple(roof(n) for n in values)
     return INDICES.get(check, ())
 
 
 def find_mid_point(a, b, base_x, base_y, edge):
+    """
+    Using the values of the two major point which are between (-1 and 1) find where the midpoint should lie
+    """
     if base_x <= 16 and base_y <= 16:
         shift = abs(a) / (abs(a)+abs(b))
     else:
@@ -48,6 +55,9 @@ def find_mid_point(a, b, base_x, base_y, edge):
 
 
 def gen_vertices(values, base_x, base_y):
+    """
+    create the vertex data for each vertex. This includes data which may not be used. As such it needs to be cleaned
+    """
     v_0, v_1, v_2, v_3 = ((base_x * BOX_SIZE, base_y * BOX_SIZE),
                           (base_x * BOX_SIZE, (base_y+1) * BOX_SIZE),
                           ((base_x+1) * BOX_SIZE, (base_y+1) * BOX_SIZE),
@@ -62,6 +72,10 @@ def gen_vertices(values, base_x, base_y):
 
 
 def clean_data(indices, vertices, index_start):
+    """
+    Since gen_vertices() calculates all vertices but not all of them will be used so it discards the unused vertices and
+    adjusts the index. (it also flattens the vertices since those are return as a tuple of tuples).
+    """
     index_check = sorted(set(indices))
     index_shift = {x: index_check.index(x)+index_start for x in index_check}
     new_indices = tuple(index_shift[n] for n in indices)
