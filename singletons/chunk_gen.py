@@ -1,8 +1,11 @@
 from array import array
 
-from numpy import reshape, frombuffer
+from numpy import reshape, frombuffer, set_printoptions
 import arcade
 import arcade.gl as gl
+from sys import maxsize
+
+set_printoptions(threshold=maxsize)
 
 
 context: arcade.ArcadeContext
@@ -72,9 +75,9 @@ class Window(arcade.Window):
         generate_chunk(0, 0, default_planet_data)
 
     def on_draw(self):
-        program['Data.radius'] = 729
-        program['Data.coreGap'] = 44
-        program['Data.coreRadius'] = 22
+        program['Data.radius'] = default_planet_data.radius
+        program['Data.coreGap'] = default_planet_data.core_gap
+        program['Data.coreRadius'] = default_planet_data.core_radius
         program['chunkPos'] = (0, 0)
 
         geometry.render(program)
