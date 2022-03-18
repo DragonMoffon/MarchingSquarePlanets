@@ -10,8 +10,6 @@ uniform struct PlanetData {
     int coreRadius, coreGap, radius;
 } Data;
 
-uniform int radius;
-
 uniform vec2 chunkPos;
 
 float smootherstep(float f){
