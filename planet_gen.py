@@ -7,7 +7,7 @@ import numpy as np
 from pyglet.math import Vec4
 
 from marchingSquares import gen_square
-# from singletons.chunk_gen import generate_chunk
+from singletons.chunk_gen import generate_chunk
 
 CHUNK_SIZE = 32
 

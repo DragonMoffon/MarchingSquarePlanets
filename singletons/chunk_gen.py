@@ -4,7 +4,6 @@ from numpy import reshape, frombuffer
 import arcade
 import arcade.gl as gl
 
-from planet_gen import default_planet_data
 
 context: arcade.ArcadeContext
 program: gl.Program
@@ -15,10 +14,23 @@ writeBuffer: gl.Framebuffer
 CHUNK_SIZE: int
 
 
+class PlanetData:
+
+    def __init__(self, core_radius: int, core_gap: int, chunk_radius: int):
+        self.core_radius = core_radius
+        self.core_gap = core_gap
+        self.chunk_radius = chunk_radius
+        self.radius = (self.chunk_radius-1) * (CHUNK_SIZE-1) + CHUNK_SIZE//2
+
+
+default_planet_data: PlanetData
+
+
 def init(ctx: arcade.ArcadeContext, chunk_size):
-    global context, program, geometry, writeTexture, writeBuffer, CHUNK_SIZE
+    global context, program, geometry, writeTexture, writeBuffer, CHUNK_SIZE, default_planet_data
     context = ctx
     CHUNK_SIZE = chunk_size
+    default_planet_data = PlanetData(24, 48, 24)
 
     program = ctx.load_program(vertex_shader="shaders/FullScreenVert.glsl",
                                fragment_shader="shaders/RadialChunkGenFrag.glsl")
@@ -57,7 +69,7 @@ class Window(arcade.Window):
         super().__init__(32, 32)
         init(self.ctx, 32)
 
-        generate_chunk(62, 0, default_planet_data)
+        generate_chunk(0, 0, default_planet_data)
 
     def on_draw(self):
         program['Data.radius'] = 729
