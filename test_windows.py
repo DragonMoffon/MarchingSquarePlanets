@@ -1,5 +1,7 @@
 import math
 from array import array
+from PIL import Image
+
 import random
 
 import arcade
@@ -7,6 +9,7 @@ import arcade.gl as gl
 
 import perlin.noise_1d as noise_1d
 import perlin.noise_2d as noise_2d
+from planet_gen import default_planet_data
 
 import marchingSquares
 
@@ -100,15 +103,48 @@ class CircleTestWindw(arcade.Window):
                 dist = math.sqrt(x ** 2 + y ** 2) / 50
 
                 if dist <= 1:
-                    noise = noise_2d.fractal_circular(angle, dist, 15, 1)
+                    noise = noise_2d.noise_circular(angle, dist, 35, rad_count=35)
                     c = 127 + int(noise*255)
                     arcade.draw_point(400 + x*5, 400 + y*5, (c, c, c), 5)
+
+
+class RandomWindow(arcade.Window):
+
+    def __init__(self):
+        super().__init__()
+        self.program = self.ctx.load_program(vertex_shader="perlin/FullScreenVert.glsl",
+                                             fragment_shader="perlin/RadialChunkGenFrag.glsl")
+        self.program['Data.radius'] = default_planet_data.radius
+        try:
+            self.program['Data.coreGap'] = default_planet_data.core_gap
+            self.program['Data.coreRadius'] = default_planet_data.core_radius
+            self.program['chunkPos'] = (0, 0)
+        except:
+            pass
+
+        self.to_texture = self.ctx.texture((32, 32), components=4, filter=(gl.NEAREST, gl.NEAREST))
+        self.frame_buffer = self.ctx.framebuffer(color_attachments=self.to_texture)
+
+        self.geometry = self.ctx.geometry([gl.BufferDescription(self.ctx.buffer(data=array('f',
+                                                                                           (-1, -1, -1, 3, 3, -1))),
+                                                                '2f', ['vertPos'])], mode=gl.TRIANGLES)
+        self.frame_buffer.clear()
+        self.frame_buffer.use()
+        arcade.set_viewport(0, 32, 0, 32)
+        self.geometry.render(self.program)
+        self.use()
+        self.clear()
+        arcade.set_viewport(0, 800, 0, 600)
+
+        self.image = Image.frombytes("RGBA", self.to_texture.size, bytes(self.to_texture.read()))
+        self.image.save("test6.png")
 
 
 def main():
     # window = MarchingWindow()
     # window = Noise1DWindow()
-    window = CircleTestWindw()
+    # window = CircleTestWindw()
+    window = RandomWindow()
     window.run()
 
 

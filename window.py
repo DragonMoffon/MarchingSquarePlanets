@@ -5,6 +5,7 @@ import arcade
 from pyglet.math import Mat4, Vec2, Vec3, Vec4
 
 import planet_gen
+from singletons.chunk_gen import init
 
 SCREEN_RESOLUTION = arcade.get_display_size()
 
@@ -14,6 +15,8 @@ class PlanetWindow(arcade.Window):
     def __init__(self):
         super().__init__(fullscreen=True)
         planet_gen.set_chunk_program(self.ctx)
+        init(self.ctx, planet_gen.CHUNK_SIZE)
+
         self.shown_chunks = [planet_gen.Chunk(a, b, planet_gen.default_planet, True)
                              for a in range(-4, 4) for b in range(-4, 4)]
 
@@ -69,12 +72,12 @@ class PlanetWindow(arcade.Window):
             self.p_velocity[0] += 1
 
     def on_mouse_scroll(self, x: int, y: int, scroll_x: int, scroll_y: int):
-        self.scale = max(min(self.scale - scroll_y/10, 30), 1)
+        self.scale = max(min(self.scale - scroll_y/10, 100), 1)
         self.update_planet_matrix()
 
     def on_update(self, delta_time: float):
         if self.p_velocity[0] or self.p_velocity[1]:
-            self.target_coords = self.target_coords + Vec2(self.p_velocity[0]*150*delta_time,
+            self.target_coords = self.target_coords + Vec2(self.p_velocity[0]*350*delta_time,
                                                            self.p_velocity[1]*100*pi/self.target_coords[0]*delta_time)
             self.target_pos = Vec2(cos(self.target_coords[1])*self.target_coords[0],
                                    sin(self.target_coords[1])*self.target_coords[0])

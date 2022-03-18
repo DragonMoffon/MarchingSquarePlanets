@@ -28,6 +28,8 @@ EDGE_VALUES = {(1, -1, -1, -1): (1.0, 0.0, 0.0, 1.0), (-1, 1, -1, -1): (1.0, 1.0
 
 
 def roof(x):
+    x = 0 if x == float('nan') else x
+    print(x)
     return ceil(x) if x > 0 else floor(x)
 
 
@@ -44,10 +46,7 @@ def find_mid_point(a, b, base_x, base_y, edge):
     """
     Using the values of the two major point which are between (-1 and 1) find where the midpoint should lie
     """
-    if base_x <= 16 and base_y <= 16:
-        shift = abs(a) / (abs(a)+abs(b))
-    else:
-        shift = 0.15 + abs(a) / (abs(a)+abs(b)) * 0.7
+    shift = abs(a) / (abs(a) + abs(b))
     if edge == 0: return base_x * BOX_SIZE, (base_y + shift) * BOX_SIZE
     elif edge == 1: return (base_x + shift) * BOX_SIZE, (base_y + 1) * BOX_SIZE
     elif edge == 2: return (base_x + 1) * BOX_SIZE, (base_y + shift) * BOX_SIZE

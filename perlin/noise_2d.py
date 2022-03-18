@@ -15,7 +15,6 @@ def normalise(x, y):
     length = length if length else 1
     return x/length, y/length
 
-
 def mix(a, b, f):
     return a * (1 - f) + b * f
 
@@ -39,7 +38,7 @@ def noise_circular(percent_angle, percent_dist, radius, *, seed=1, frequency=1, 
     mpr = rad_count * frequency
     dist = radius * percent_dist * frequency
     floor_dist = math.floor(dist)
-    fract_dist = dist - math.floor(dist)
+    fract_dist = dist - floor_dist
 
     f_vert = smoother_step(fract_dist)
 
@@ -56,11 +55,11 @@ def noise_circular(percent_angle, percent_dist, radius, *, seed=1, frequency=1, 
     f_top = smoother_step(fract_top)
 
     vec_1 = get_rand_vec(floor_bottom, floor_dist, seed)
-    if floor_bottom != 0:
+    if floor_dist != 0:
         mod = int(mpr * floor_dist / radius)
         vec_2 = get_rand_vec((floor_bottom + 1) % mod, floor_dist, seed)
     else:
-        vec_2 = get_rand_vec(floor_bottom, floor_dist, seed)
+        vec_2 = vec_1
     vec_3 = get_rand_vec(floor_top, (floor_dist + 1))
     mod = int(mpr * (floor_dist+1) / radius)
     vec_4 = get_rand_vec((floor_top + 1) % mod, (floor_dist + 1), seed)
@@ -101,8 +100,6 @@ def fractal_circular(percent_angle, percent_dist, radius, octaves, *, seed=1):
                                        frequency=frequency, rad_count=radius//5*10) * amplitude
         frequency *= 2
         amplitude *= 0.5
-    # tunnel_noise = remap_to_threshold(tunnel_noise, 0.7)
-    # cavern_noise = remap_to_threshold(cavern_noise, 0.99)
     v_range = sum(1/(2**i) for i in range(octaves))
 
     tunnel_noise /= v_range

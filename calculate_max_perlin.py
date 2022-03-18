@@ -49,7 +49,7 @@ def calculate():
                         max_mid = mid
                     data += f"mid: {mid}, b_l: {c_0}, b_r: {c_1}, t_l: {c_2}, t_r: {c_3}\n"
     data += f"largest_mid: {max_mid}, largest_corner: {max_corner}"
-    with open("test_2.txt", 'w') as file:
+    with open("tests/test_2.txt", 'w') as file:
         file.write(data)
 
 

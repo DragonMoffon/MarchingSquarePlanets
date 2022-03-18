@@ -1,16 +1,15 @@
-from dataclasses import dataclass
-import math
 from array import array
+from PIL import Image
 
 import arcade
 import arcade.gl as gl
 import numpy as np
 from pyglet.math import Vec4
 
-import perlin.noise_2d as noise_2d
 from marchingSquares import gen_square
+from singletons.chunk_gen import generate_chunk
 
-CHUNK_SIZE = 16
+CHUNK_SIZE = 32
 
 CHUNK_PROGRAM = None
 
@@ -38,7 +37,7 @@ class PlanetData:
         self.radius = (self.chunk_radius-1) * (CHUNK_SIZE-1) + CHUNK_SIZE//2
 
 
-default_planet_data = PlanetData(11, 22, 24)
+default_planet_data = PlanetData(24, 48, 24)
 
 
 def chunk_geometry_shader(vertex_buffer, index_buffer, ctx: gl.Context):
@@ -54,7 +53,7 @@ class Chunk:
         self.x = x
         self.y = y
 
-        self.points = np.zeros([CHUNK_SIZE, CHUNK_SIZE])
+        self.points = None
 
         self.shown = self.generated = False
 
@@ -79,34 +78,7 @@ class Chunk:
 
         c_x = (CHUNK_SIZE-1)*self.x
         c_y = (CHUNK_SIZE-1)*self.y
-        for p_x in range(CHUNK_SIZE):
-            for p_y in range(CHUNK_SIZE):
-                w_x = c_x + p_x
-                w_y = c_y + p_y
-                angle_percent = math.atan2(w_y, w_x) / (2 * math.pi)
-                angle_percent += 1 if angle_percent < 0 else 0
-                angle_percent += 0.001 if angle_percent == 0 else 0
-
-                dist = math.sqrt(w_x**2 + w_y**2)
-                dist_percent = dist / data.radius
-
-                if dist <= data.core_gap:
-                    if dist <= data.core_radius + 2:
-                        from_edge = max(min(1, data.core_radius - dist), -1)
-                        from_edge += 0.0001 if from_edge == 0 else 0
-
-                    else:
-                        from_edge = max(min(1, dist - data.core_gap), -1)
-                        from_edge += 0.0001 if from_edge == 0 else 0
-                    self.points[p_x, p_y] = from_edge
-                else:
-                    if dist <= data.radius:
-                        noise_val = noise_2d.fractal_circular(angle_percent, dist_percent, 35, 5, seed=world_seed)
-                        noise_val += 0.1 if dist > data.radius-1 else 0
-                    else:
-                        noise_val = max(min(1, data.radius - dist), -1)
-                        noise_val += 0.0001 if noise_val == 0 else 0
-                    self.points[p_x, p_y] = noise_val
+        self.points = generate_chunk(c_x, c_y, data)
 
         p = self.points
         vertices = []
@@ -115,7 +87,8 @@ class Chunk:
             for p_y in range(CHUNK_SIZE-1):
                 w_x = c_x + p_x
                 w_y = c_y + p_y
-                values = (p[p_x, p_y], p[p_x, p_y+1], p[p_x+1, p_y+1], p[p_x+1, p_y])
+                values = (p[p_x, p_y, 0], p[p_x, p_y+1, 0],
+                          p[p_x+1, p_y+1, 0], p[p_x+1, p_y, 0])
                 ind, vert = gen_square(values, w_x, w_y, len(vertices)//2)
                 indices += ind
                 vertices += vert
@@ -153,26 +126,25 @@ class Planet:
 
     def find_revealed_chunks(self, matrix):
         pass
-        # self.shown_chunks = []
-        # for line in self.chunks:
-        #     for chunk in line:
-        #         done = False
-        #         for x in range(0, 2):
-        #             for y in range(0, 2):
-        #                 check = matrix @ Vec4((chunk.x+x)*15*60, (chunk.y+y)*15*60, 0, 1)
-        #                 if -1.5 <= check.x <= 1.5 and -1.5 <= check.y <= 1.5:
-        #                     self.shown_chunks.append(chunk)
-        #                     chunk.reveal()
-        #                     done = True
-        #                     break
-        #             if done: break
-        #             else:
-        #                 chunk.hide()
+        self.shown_chunks = []
+        for line in self.chunks:
+            for chunk in line:
+                done = False
+                for x in range(0, 2):
+                    for y in range(0, 2):
+                        check = matrix @ Vec4((chunk.x+x)*(CHUNK_SIZE-1)*60, (chunk.y+y)*(CHUNK_SIZE-1)*60, 0, 1)
+                        if -1.5 <= check.x <= 1.25 and -1.25 <= check.y <= 1.5:
+                            self.shown_chunks.append(chunk)
+                            chunk.reveal()
+                            done = True
+                            break
+                    if done: break
+                    else:
+                        chunk.hide()
 
     def draw(self):
         for line in self.chunks:
             for chunk in line:
-                chunk.reveal()
                 chunk.render()
         # for chunk in self.shown_chunks:
         #    chunk.render()
