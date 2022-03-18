@@ -56,6 +56,11 @@ class Window(arcade.Window):
         init(self.ctx, 32)
 
     def on_draw(self):
+        program['Data.radius'] = 729
+        program['Data.coreGap'] = 24
+        program['Data.coreRadius'] = 22
+        program['chunkPos'] = (0, 0)
+
         geometry.render(program)
 
 

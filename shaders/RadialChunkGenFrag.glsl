@@ -173,7 +173,7 @@ void main() {
         }
     }
     noise_val += noise_val == 0.0? 0.001 : 0;
-    noise_val = isnan(noise_val)? 0: noise_val;
-    fragColor = vec4(dist); // vec4(vec3(noise_val), 1); // vec4(noise_val*0.5+0.5, angle, dist/Data.radius, 1);
+    // noise_val = isnan(noise_val)? 0: noise_val;
+    fragColor = vec4(noise_val); // vec4(vec3(noise_val), 1); // vec4(noise_val*0.5+0.5, angle, dist/Data.radius, 1);
 }
 
