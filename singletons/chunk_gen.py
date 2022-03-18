@@ -1,6 +1,4 @@
 from array import array
-from PIL import Image
-import struct
 
 from numpy import reshape, frombuffer
 import arcade
@@ -27,28 +25,44 @@ def init(ctx: arcade.ArcadeContext, chunk_size):
                                                   '2f', ['vertPos'])], mode=gl.TRIANGLES)
     writeTexture = ctx.texture((CHUNK_SIZE, CHUNK_SIZE), components=1, dtype='f4', filter=(gl.NEAREST, gl.NEAREST))
     writeBuffer = ctx.framebuffer(color_attachments=writeTexture)
+    writeBuffer.viewport = 0, 0, CHUNK_SIZE, CHUNK_SIZE
 
 
 def generate_chunk(chunk_x, chunk_y, planet_data):
     window = arcade.get_window()
-    view_port = context.viewport
 
-    program['Data.radius'] = planet_data.radius
+    # program['Data.radius'] = planet_data.radius
     program['Data.coreGap'] = planet_data.core_gap
     program['Data.coreRadius'] = planet_data.core_radius
     program['chunkPos'] = (chunk_x, chunk_y)
 
+    # program['radius'] = planet_data.radius
+
     writeBuffer.use()
-    writeBuffer.clear((0.0, 0.0, 0.0, 0.0), normalized=True)
+    writeBuffer.clear()
     geometry.render(program)
     window.use()
 
-    data = writeTexture.read()
-    stu = struct.unpack('1024f', data)
-    print(stu)
-    # print(len(data), data)
+    buffer = reshape(frombuffer(writeTexture.read(), 'f4'), [CHUNK_SIZE, CHUNK_SIZE])
+    print(buffer)
 
-    test = reshape(frombuffer(writeTexture.read(), 'f4'), [CHUNK_SIZE, CHUNK_SIZE])
-    # print(f"{chunk_x}, {chunk_y}:\n{test}")
+    return buffer
 
-    return None
+
+class Window(arcade.Window):
+
+    def __init__(self):
+        super().__init__(32, 32)
+        init(self.ctx, 32)
+
+    def on_draw(self):
+        geometry.render(program)
+
+
+def main():
+    window = Window()
+    window.run()
+
+
+if __name__ == '__main__':
+    main()

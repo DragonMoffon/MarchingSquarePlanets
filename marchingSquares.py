@@ -28,8 +28,6 @@ EDGE_VALUES = {(1, -1, -1, -1): (1.0, 0.0, 0.0, 1.0), (-1, 1, -1, -1): (1.0, 1.0
 
 
 def roof(x):
-    x = 0 if x == float('nan') else x
-    print(x)
     return ceil(x) if x > 0 else floor(x)
 
 

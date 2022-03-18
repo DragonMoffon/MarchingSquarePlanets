@@ -4,11 +4,13 @@
 
 in vec4 gl_FragCoord;
 
-out float fragColor;
+out vec4 fragColor;
 
 uniform struct PlanetData {
     int coreRadius, coreGap, radius;
 } Data;
+
+uniform int radius;
 
 uniform vec2 chunkPos;
 
@@ -146,10 +148,10 @@ float fractalNoise(float dist, float angle){
 void main() {
     vec2 pos = chunkPos + gl_FragCoord.xy;
     float angle = atan(pos.y, pos.x) / (2 * Pi);
-    angle += (angle < 0? 1: 0) + (angle == 0? 0.001: 0);
+    angle += (angle < 0? 1: 0);
     float dist = length(pos);
 
-    float noise_val = clamp(Data.radius - dist, -1, 1);
+    float noise_val = -1;
     if (dist <= Data.coreGap){
         if (dist <= Data.coreRadius+2){
             noise_val = clamp(Data.coreRadius - dist, -1, 1);
@@ -158,7 +160,6 @@ void main() {
         else{
             noise_val = clamp(dist - Data.coreGap, -1, 1);
         }
-        noise_val += noise_val == 0.0? 0.001 : 0;
     }
     else{
         if (dist <= Data.radius){
@@ -172,6 +173,7 @@ void main() {
         }
     }
     noise_val += noise_val == 0.0? 0.001 : 0;
-    fragColor = noise_val; // vec4(vec3(noise_val), 1); // vec4(noise_val*0.5+0.5, angle, dist/Data.radius, 1);
+    noise_val = isnan(noise_val)? 0: noise_val;
+    fragColor = vec4(dist); // vec4(vec3(noise_val), 1); // vec4(noise_val*0.5+0.5, angle, dist/Data.radius, 1);
 }
 

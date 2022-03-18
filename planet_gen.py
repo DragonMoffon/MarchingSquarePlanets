@@ -87,8 +87,8 @@ class Chunk:
             for p_y in range(CHUNK_SIZE-1):
                 w_x = c_x + p_x
                 w_y = c_y + p_y
-                values = (p[p_x, p_y, 0], p[p_x, p_y+1, 0],
-                          p[p_x+1, p_y+1, 0], p[p_x+1, p_y, 0])
+                values = (p[p_x, p_y], p[p_x, p_y+1],
+                          p[p_x+1, p_y+1], p[p_x+1, p_y])
                 ind, vert = gen_square(values, w_x, w_y, len(vertices)//2)
                 indices += ind
                 vertices += vert
