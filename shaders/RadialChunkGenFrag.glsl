@@ -4,7 +4,7 @@
 
 in vec4 gl_FragCoord;
 
-out vec4 fragColor;
+out float fragColor;
 
 uniform struct PlanetData {
     int coreRadius, coreGap, radius;
@@ -112,11 +112,18 @@ float perlinNoise(float percent_dist, float percent_angle, int radius, int rad_c
     vec2 t_l = pickVec(vec2(t_floor, d_floor+1));
     vec2 t_r = (t_floor + 1 >= t_mod)? pickVec(vec2(0, d_floor+1)) : pickVec(vec2(t_floor+1, d_floor+1));
 
+
+    float d_b_l = dot(b_l, normalize(vec2(b_fract, d_fract)));
+    float d_b_r = dot(b_r, normalize(vec2(b_fract, d_fract)-vec2(1, 0)));
+    float d_t_l = dot(t_l, normalize(vec2(t_fract, d_fract)-vec2(0, 1)));
+    float d_t_r = dot(t_r, normalize(vec2(t_fract, d_fract)-vec2(1)));
+
+
     float result = mix(
-    mix(dot(b_l, normalize(vec2(b_fract, d_fract))),
-        dot(b_r, normalize(vec2(b_fract, d_fract)-vec2(1, 0))), f_bot),
-    mix(dot(t_l, normalize(vec2(t_fract, d_fract)-vec2(0, 1))),
-        dot(t_r, normalize(vec2(t_fract, d_fract)-vec2(1))), f_top),
+    mix(d_b_l,
+        d_b_r, f_bot),
+    mix(d_t_l,
+        d_t_r, f_top),
         f_dist);
 
 
@@ -127,24 +134,26 @@ float perlinNoise(float percent_dist, float percent_angle, int radius, int rad_c
 float fractalNoise(float dist, float angle){
     float tunnel_noise = 0, cavern_noise = 0, amplitude = 1;
     int frequency = 1;
-    for (int i = 0; i < 5; i++){
+    for (int i = 0; i < 4; i++){
         tunnel_noise += perlinNoise(dist, angle, 35, 35, frequency) * amplitude;
         cavern_noise += perlinNoise(dist, angle, 7, 70, frequency) * amplitude;
         frequency *= 2;
         amplitude *- 0.5;
     }
-    const float v_range = 1.9375; // 1 + 0.5 + 0.25 + 0.125 + 0.0625
-    const float dist_sqrt = sqrt(dist);
+    const float v_range = 1.875; // 1 + 0.5 + 0.25 + 0.125 + 0.0625
+    const float dist_sqrt = sqrt(abs(dist))*sign(dist);
 
-    tunnel_noise = pow((tunnel_noise/v_range * 0.5 + 0.5), 1.2)*2-1;
-    cavern_noise = pow((cavern_noise/v_range * 0.5 + 0.5), 0.25+(1-dist_sqrt)*1.5)*2-1;
+    tunnel_noise = clamp(tunnel_noise/v_range, -0.9999, 0.9999);
+    cavern_noise = clamp(tunnel_noise/v_range, -0.9999, 0.9999);
+    tunnel_noise = pow((tunnel_noise * 0.5 + 0.5), 1.2)*2-1;
+    cavern_noise = pow((cavern_noise * 0.5 + 0.5), 0.25+(1-dist_sqrt)*1.5)*2-1;
 
     return mix(cavern_noise, tunnel_noise, dist_sqrt);
 }
 
 
 void main() {
-    vec2 pos = chunkPos + gl_FragCoord.xy;
+    vec2 pos = chunkPos + gl_FragCoord.xy; // - vec2(0.5, 0.5);
     float angle = atan(pos.y, pos.x) / (2 * Pi);
     angle += (angle < 0? 1: 0);
     float dist = length(pos);
@@ -153,7 +162,6 @@ void main() {
     if (dist <= Data.coreGap){
         if (dist <= Data.coreRadius+2){
             noise_val = clamp(Data.coreRadius - dist, -1, 1);
-
         }
         else{
             noise_val = clamp(dist - Data.coreGap, -1, 1);
@@ -162,6 +170,7 @@ void main() {
     else{
         if (dist <= Data.radius){
             noise_val = fractalNoise(dist/Data.radius, angle);
+            // noise_val = isnan(noise_val) ? dist : noise_val;
             if (dist >= Data.radius-1 && noise_val>0){
                 noise_val = clamp(Data.radius - dist, -1, 1);
             }
@@ -170,8 +179,8 @@ void main() {
             noise_val = clamp(Data.radius - dist, -1, 1);
         }
     }
-    noise_val += noise_val == 0.0? 0.001 : 0;
+    // noise_val += noise_val == 0.0? 0.001 : 0;
     // noise_val = isnan(noise_val)? 0: noise_val;
-    fragColor = vec4(noise_val); // vec4(vec3(noise_val), 1); // vec4(noise_val*0.5+0.5, angle, dist/Data.radius, 1);
+    fragColor = noise_val; // vec4(vec3(noise_val), 1); // vec4(noise_val*0.5+0.5, angle, dist/Data.radius, 1);
 }
 

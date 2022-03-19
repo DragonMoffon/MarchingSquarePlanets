@@ -1,11 +1,12 @@
-from math import cos, sin, atan2, pi
+from math import cos, sin, atan2, pi, floor
 import time
 
 import arcade
 from pyglet.math import Mat4, Vec2, Vec3, Vec4
 
 import planet_gen
-from singletons.chunk_gen import init
+from marchingSquares import gen_square
+from singletons.chunk_gen import init, generate_chunk
 
 SCREEN_RESOLUTION = arcade.get_display_size()
 
@@ -16,9 +17,6 @@ class PlanetWindow(arcade.Window):
         super().__init__(fullscreen=True)
         planet_gen.set_chunk_program(self.ctx)
         init(self.ctx, planet_gen.CHUNK_SIZE)
-
-        self.shown_chunks = [planet_gen.Chunk(a, b, planet_gen.default_planet, True)
-                             for a in range(-4, 4) for b in range(-4, 4)]
 
         self.target_pos = Vec2(800, 0)
         self.target_coords = 800, 0
@@ -47,7 +45,8 @@ class PlanetWindow(arcade.Window):
 
         self.ctx.projection_2d_matrix = self.planet_matrix
 
-        planet_gen.default_planet.find_revealed_chunks(self.planet_matrix)
+        floor_pos = floor(self.target_pos.x/1860), floor(self.target_pos.y/1860)
+        planet_gen.default_planet.find_revealed_chunks(*floor_pos, scale)
 
     def on_key_press(self, symbol: int, modifiers: int):
         if symbol == arcade.key.ESCAPE:
