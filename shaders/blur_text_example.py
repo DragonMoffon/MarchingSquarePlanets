@@ -43,7 +43,7 @@ void main(){
     // texel coordinate we are writing to
     ivec2 texelPos = ivec2(gl_GlobalInvocationID.xy);
     
-    imageStore(outImage, texelPos, vec4(1.0));
+    imageStore(outImage, texelPos, apply(texelPos));
 }
 
 """
@@ -89,7 +89,16 @@ class BlurryTextExample(arcade.Window):
 
         self.blurShader.run(group_x=self.work_group_count[0], group_y=self.work_group_count[1], group_z=1)
         print(self.image_2.read())
-        # self.image_2, self.image_1 = self.image_1, self.image_2
+        self.image_2, self.image_1 = self.image_1, self.image_2
+
+        framebuffer = self.ctx.framebuffer(color_attachments=self.image_1)
+        self.text.color = arcade.color.WHITE
+        framebuffer.use()
+        # Since we have text which uses a projection matrix we have to change the viewport
+        arcade.set_viewport(0, self.image_size[0], 0, self.image_size[1])
+        self.text.draw()
+        self.use()
+        arcade.set_viewport(0, self.width, 0, self.height)
 
         # Visualize the texture
         self.program = self.ctx.program(
@@ -123,7 +132,7 @@ class BlurryTextExample(arcade.Window):
         self.clear()
         # self.text.draw()
 
-        self.image_2.use(0)
+        self.image_1.use(0)
         self.quad.render(self.program)
 
 
