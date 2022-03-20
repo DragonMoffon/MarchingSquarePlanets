@@ -81,7 +81,7 @@ class Chunk:
 
         c_x = (CHUNK_SIZE-1)*self.x
         c_y = (CHUNK_SIZE-1)*self.y
-        self.points, self.vertex_buffer, self.index_buffer = generate_chunk(c_x, c_y, data, (self.x==0 and self.y==0))
+        self.points, self.vertex_buffer, self.index_buffer = generate_chunk(c_x, c_y, data)
         if self.vertex_buffer is not None and self.index_buffer is not None:
             ctx = gl.Context.active
             self.geometry = chunk_geometry_shader(self.vertex_buffer, self.index_buffer, ctx)

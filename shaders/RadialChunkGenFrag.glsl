@@ -134,13 +134,15 @@ float perlinNoise(float percent_dist, float percent_angle, int radius, int rad_c
 float fractalNoise(float dist, float angle){
     float tunnel_noise = 0, cavern_noise = 0, amplitude = 1;
     int frequency = 1;
-    for (int i = 0; i < 4; i++){
+    float shift_angle = angle * perlinNoise(dist, angle, 35, 35, 1);
+    float shift_dist = dist * perlinNoise(angle, dist, 10, 100, 1);
+    for (int i = 0; i < 1; i++){
         tunnel_noise += perlinNoise(dist, angle, 35, 35, frequency) * amplitude;
         cavern_noise += perlinNoise(dist, angle, 7, 70, frequency) * amplitude;
         frequency *= 2;
         amplitude *- 0.5;
     }
-    const float v_range = 1.875; // 1 + 0.5 + 0.25 + 0.125 + 0.0625
+    const float v_range = 1; // 1 + 0.5 + 0.25 + 0.125 + 0.0625
     const float dist_sqrt = sqrt(abs(dist))*sign(dist);
 
     tunnel_noise = clamp(tunnel_noise/v_range, -0.9999, 0.9999);
@@ -181,7 +183,7 @@ void main() {
     }
     // noise_val += noise_val == 0.0? 0.001 : 0;
     // noise_val = isnan(noise_val)? 0: noise_val;
-    // fragColor = noise_val; // vec4(vec3(noise_val), 1); // vec4(noise_val*0.5+0.5, angle, dist/Data.radius, 1);
-    fragColor = mod(gl_FragCoord.x-0.5, 2)*2-1;
+    fragColor = noise_val; // vec4(vec3(noise_val), 1); // vec4(noise_val*0.5+0.5, angle, dist/Data.radius, 1);
+    // fragColor = mod(gl_FragCoord.x-0.5, 2)*2-1;
 }
 

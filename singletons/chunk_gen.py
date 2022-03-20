@@ -32,7 +32,7 @@ INDEX_DATA = array("i", (
     0, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1,  # 1000 - vertex count: 3 - len: 3
     0, 2, 3, 0, 3, 1, -1, -1, -1, -1, -1, -1,  # 1001 - vertex count: 4 - len: 6
     0, 3, 2, 2, 3, 4, 2, 4, 5, 1, 5, 4,  # 1010 - vertex count: 6 - len: 12
-    0, 2, 3, 0, 3, 4, 0, 4, 2, -1, -1, -1,  # 1011 - vertex count: 5 - len: 9
+    0, 1, 3, 0, 3, 4, 0, 4, 2, -1, -1, -1,  # 1011 - vertex count: 5 - len: 9
     0, 1, 3, 0, 3, 2, -1, -1, -1, -1, -1, -1,  # 1100 - vertex count: 4 - len: 6
     2, 0, 3, 2, 3, 4, 2, 4, 1, -1, -1, -1,  # 1101 - vertex count: 5 - len: 9
     1, 2, 4, 1, 4, 3, 1, 3, 0, -1, -1, -1,  # 1110 - vertex count: 5 - len: 9
@@ -64,13 +64,13 @@ def init(ctx: arcade.ArcadeContext, chunk_size):
     index_data_ssbo = ctx.buffer(data=INDEX_DATA)
 
 
-def generate_chunk(chunk_x, chunk_y, planet_data, debug):
+def generate_chunk(chunk_x, chunk_y, planet_data):
     window = arcade.get_window()
 
-    # program['Data.radius'] = planet_data.radius
-    # program['Data.coreGap'] = planet_data.core_gap
-    # program['Data.coreRadius'] = planet_data.core_radius
-    # program['chunkPos'] = (chunk_x, chunk_y)
+    program['Data.radius'] = planet_data.radius
+    program['Data.coreGap'] = planet_data.core_gap
+    program['Data.coreRadius'] = planet_data.core_radius
+    program['chunkPos'] = (chunk_x, chunk_y)
 
     context.disable(context.BLEND)
     writeBuffer.use()
@@ -101,20 +101,6 @@ def generate_chunk(chunk_x, chunk_y, planet_data, debug):
     vertex_buffer = window.ctx.buffer(data=vertex_ssbo.read(vertex_count, 8)) if vertex_count else None
 
     density_map = reshape(frombuffer(writeTexture.read(), 'f'), [CHUNK_SIZE, CHUNK_SIZE]).transpose()
-
-    if debug:
-        print(density_map)
-        if index_buffer is not None:
-            print(frombuffer(index_buffer.read(), 'i'))
-        if vertex_buffer is not None:
-            print(frombuffer(vertex_buffer.read(), 'f'))
-        for i in range(int.from_bytes(index_ssbo.read(4), "little")):
-            index = int.from_bytes(index_ssbo.read(4, 4+i*4), 'little')
-            print(index)
-            vertex = struct.unpack('2f', vertex_ssbo.read(8, 8+index*8))
-            print(f"{index} : {vertex}")
-
-        print(index_count, vertex_count)
 
     # print(chunk_x, chunk_y, f"\n{buffer}")
     return density_map, vertex_buffer, index_buffer
