@@ -46,7 +46,9 @@ class PlanetWindow(arcade.Window):
         self.ctx.projection_2d_matrix = self.planet_matrix
 
         floor_pos = floor(self.target_pos.x/1860), floor(self.target_pos.y/1860)
-        planet_gen.default_planet.find_revealed_chunks(*floor_pos, scale)
+        planet_gen.default_planet.shown_chunks = [planet_gen.default_planet.chunks[24, 24]]
+        planet_gen.default_planet.chunks[24, 24].reveal()
+        # planet_gen.default_planet.find_revealed_chunks(*floor_pos, scale)
 
     def on_key_press(self, symbol: int, modifiers: int):
         if symbol == arcade.key.ESCAPE:

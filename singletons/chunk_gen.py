@@ -1,4 +1,5 @@
 from array import array
+import struct
 
 from numpy import reshape, frombuffer, set_printoptions
 import arcade
@@ -35,7 +36,7 @@ INDEX_DATA = array("i", (
     0, 1, 3, 0, 3, 2, -1, -1, -1, -1, -1, -1,  # 1100 - vertex count: 4 - len: 6
     2, 0, 3, 2, 3, 4, 2, 4, 1, -1, -1, -1,  # 1101 - vertex count: 5 - len: 9
     1, 2, 4, 1, 4, 3, 1, 3, 0, -1, -1, -1,  # 1110 - vertex count: 5 - len: 9
-    0, 1, 2, 1, 2, 3, -1, -1, -1, -1, -1, -1,  # 1111 - vertex count: 4 - len: 6
+    0, 1, 2, 0, 2, 3, -1, -1, -1, -1, -1, -1,  # 1111 - vertex count: 4 - len: 6
 ))
 
 MAX_VERTEX_COUNT = 5766
@@ -66,49 +67,54 @@ def init(ctx: arcade.ArcadeContext, chunk_size):
 def generate_chunk(chunk_x, chunk_y, planet_data, debug):
     window = arcade.get_window()
 
-    program['Data.radius'] = planet_data.radius
-    program['Data.coreGap'] = planet_data.core_gap
-    program['Data.coreRadius'] = planet_data.core_radius
-    program['chunkPos'] = (chunk_x, chunk_y)
+    # program['Data.radius'] = planet_data.radius
+    # program['Data.coreGap'] = planet_data.core_gap
+    # program['Data.coreRadius'] = planet_data.core_radius
+    # program['chunkPos'] = (chunk_x, chunk_y)
 
-    query = context.query()
-    with query:
-        context.disable(context.BLEND)
-        writeBuffer.use()
-        writeBuffer.clear()
-        geometry.render(program)
-        writeTexture.bind_to_image(0)
-        cleanup_shader.run(group_x=1, group_y=1, group_z=1)
-        window.use()
+    context.disable(context.BLEND)
+    writeBuffer.use()
+    writeBuffer.clear()
+    geometry.render(program)
+    writeTexture.bind_to_image(0)
+    cleanup_shader.run(group_x=1, group_y=1, group_z=1)
+    window.use()
 
-        vertex_ssbo = window.ctx.buffer(reserve=MAX_VERTEX_COUNT*8+4)
-        # 4 bytes per 32-bit float, 2 floats per vertex, plus 4 for 32-bit count integer
-        index_ssbo = window.ctx.buffer(reserve=MAX_INDEX_COUNT*4+4)
-        # 4 bytes per 32-bit integer, 1 int per index, plus 4 for 32-bit count integer
+    vertex_ssbo = window.ctx.buffer(reserve=MAX_VERTEX_COUNT*8+4)
+    # 4 bytes per 32-bit float, 2 floats per vertex, plus 4 for 32-bit count integer
+    index_ssbo = window.ctx.buffer(reserve=MAX_INDEX_COUNT*4+4)
+    # 4 bytes per 32-bit integer, 1 int per index, plus 4 for 32-bit count integer
 
-        writeTexture.bind_to_image(0, read=True, write=False)
-        mesh_gen_shader['chunkPos'] = chunk_x, chunk_y
+    writeTexture.bind_to_image(0, read=True, write=False)
+    mesh_gen_shader['chunkPos'] = chunk_x, chunk_y
 
-        index_ssbo.bind_to_storage_buffer(binding=0)
-        vertex_ssbo.bind_to_storage_buffer(binding=1)
-        index_data_ssbo.bind_to_storage_buffer(binding=2)
+    index_ssbo.bind_to_storage_buffer(binding=0)
+    vertex_ssbo.bind_to_storage_buffer(binding=1)
+    index_data_ssbo.bind_to_storage_buffer(binding=2)
 
-        mesh_gen_shader.run(group_x=1, group_y=1, group_z=1)
+    mesh_gen_shader.run(group_x=1, group_y=1, group_z=1)
 
-        index_count = int.from_bytes(index_ssbo.read(4), "little")*4
-        index_buffer = window.ctx.buffer(data=index_ssbo.read(index_count, 4)) if index_count else None
+    index_count = int.from_bytes(index_ssbo.read(4), "little")*4
+    index_buffer = window.ctx.buffer(data=index_ssbo.read(index_count, 4)) if index_count else None
 
-        vertex_count = int.from_bytes(vertex_ssbo.read(4), 'little')*8
-        vertex_buffer = window.ctx.buffer(data=vertex_ssbo.read(vertex_count, 4)) if vertex_count else None
-
-
-    if debug:
-        print(query.time_elapsed)
-        print(frombuffer(index_ssbo.read(), 'i'))
-        print(frombuffer(vertex_buffer.read(), 'f4'))
-        print(index_count, vertex_count)
+    vertex_count = int.from_bytes(vertex_ssbo.read(4), 'little')*8
+    vertex_buffer = window.ctx.buffer(data=vertex_ssbo.read(vertex_count, 8)) if vertex_count else None
 
     density_map = reshape(frombuffer(writeTexture.read(), 'f'), [CHUNK_SIZE, CHUNK_SIZE]).transpose()
+
+    if debug:
+        print(density_map)
+        if index_buffer is not None:
+            print(frombuffer(index_buffer.read(), 'i'))
+        if vertex_buffer is not None:
+            print(frombuffer(vertex_buffer.read(), 'f'))
+        for i in range(int.from_bytes(index_ssbo.read(4), "little")):
+            index = int.from_bytes(index_ssbo.read(4, 4+i*4), 'little')
+            print(index)
+            vertex = struct.unpack('2f', vertex_ssbo.read(8, 8+index*8))
+            print(f"{index} : {vertex}")
+
+        print(index_count, vertex_count)
 
     # print(chunk_x, chunk_y, f"\n{buffer}")
     return density_map, vertex_buffer, index_buffer
