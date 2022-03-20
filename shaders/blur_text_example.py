@@ -24,17 +24,17 @@ vec4 apply(ivec2 pixelPos){
     ivec2 image_size = imageSize(outImage);
     vec4 total = vec4(0.0);
     
-    total += texelFetch(inImage, pixelPos+ivec2(-1, -1), 0) * vec4(vec3(blurKernel[0]), 1);
-    total += texelFetch(inImage, pixelPos+ivec2(0, -1), 0) * vec4(vec3(blurKernel[1]), 1);
-    total += texelFetch(inImage, pixelPos+ivec2(1, -1), 0) * vec4(vec3(blurKernel[2]), 1);
+    total += imageLoad(inImage, clamp(pixelPos+ivec2(-1,-1), ivec2(0,0), image_size)) * vec4(vec3(blurKernel[0]), 1);
+    total += imageLoad(inImage, clamp(pixelPos+ivec2(0, -1), ivec2(0,0), image_size)) * vec4(vec3(blurKernel[1]), 1);
+    total += imageLoad(inImage, clamp(pixelPos+ivec2(1,-1), ivec2(0,0), image_size)) * vec4(vec3(blurKernel[2]), 1);
     
-    total += texelFetch(inImage, pixelPos+ivec2(-1, 0), 0) * vec4(vec3(blurKernel[3]), 1);
-    total += texelFetch(inImage, pixelPos+ivec2(0, 0), 0) * vec4(vec3(blurKernel[4]), 1);
-    total += texelFetch(inImage, pixelPos+ivec2(1, 0), 0) * vec4(vec3(blurKernel[5]), 1);
+    total += imageLoad(inImage, clamp(pixelPos+ivec2(-1,0), ivec2(0,0), image_size)) * vec4(vec3(blurKernel[3]), 1);
+    total += imageLoad(inImage, clamp(pixelPos+ivec2(0,0), ivec2(0,0), image_size)) * vec4(vec3(blurKernel[4]), 1);
+    total += imageLoad(inImage, clamp(pixelPos+ivec2(1,0), ivec2(0,0), image_size)) * vec4(vec3(blurKernel[5]), 1);
     
-    total += texelFetch(inImage, pixelPos+ivec2(-1, 1), 0) * vec4(vec3(blurKernel[6]), 1);
-    total += texelFetch(inImage, pixelPos+ivec2(0, 0), 0) * vec4(vec3(blurKernel[7]), 1);
-    total += texelFetch(inImage, pixelPos+ivec2(1, 0), 0) * vec4(vec3(blurKernel[8]), 1);
+    total += imageLoad(inImage, clamp(pixelPos+ivec2(-1,1), ivec2(0,0), image_size)) * vec4(vec3(blurKernel[6]), 1);
+    total += imageLoad(inImage, clamp(pixelPos+ivec2(0,1), ivec2(0,0), image_size)) * vec4(vec3(blurKernel[7]), 1);
+    total += imageLoad(inImage, clamp(pixelPos+ivec2(1,1), ivec2(0,0), image_size)) * vec4(vec3(blurKernel[8]), 1);
     
     return total;
 }
@@ -201,8 +201,6 @@ class BlurryTextExample(arcade.Window):
         self.text.x = self.image_size[0]//2
         self.text.y = self.image_size[1]//2
 
-        self.render_quad = geometry.quad_2d_fs()
-        self.blur_program = self.ctx.program(vertex_shader=VERTEX_SHADER, fragment_shader=FRAGMENT_SHADER)
         # The two images we will bounce between to do the blurring.
         self.image_1 = self.ctx.texture(self.image_size, components=4, wrap_x=gl.CLAMP_TO_EDGE, wrap_y=gl.CLAMP_TO_EDGE,
                                         filter=(gl.NEAREST, gl.NEAREST))
@@ -214,6 +212,7 @@ class BlurryTextExample(arcade.Window):
         framebuffer_1 = self.ctx.framebuffer(color_attachments=self.image_1)
         framebuffer_2 = self.ctx.framebuffer(color_attachments=self.image_2)
 
+        self.compute = self.ctx.compute_shader(source=COMPUTE_SHADER)
         self.ctx.disable(self.ctx.BLEND)
 
         framebuffer_1.use()
@@ -222,12 +221,12 @@ class BlurryTextExample(arcade.Window):
         arcade.set_viewport(0, self.image_size[0], 0, self.image_size[1])
         self.text.draw()
 
+        self.image_1.bind_to_image(0)
+        self.image_2.bind_to_image(1)
+
+        self.compute.run(*self.work_group_count, 1)
+
         framebuffer_2.use()
-        framebuffer_2.clear()
-
-        self.image_1.use(0)
-
-        self.render_quad.render(self.blur_program)
 
         self.text.color = arcade.color.WHITE
         self.text.draw()
